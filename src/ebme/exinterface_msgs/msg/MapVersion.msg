@@ -1,0 +1,3 @@
+string map_dir_name
+string lm_map_version
+string vm_map_version

@@ -1,0 +1,36 @@
+#!/bin/bash
+while :
+do
+  case "$1" in 
+    --ros-args )
+      shift
+      ;;
+    -r )
+      node="$2"
+      shift 2
+      ;;
+    --params-file )
+      port=$(sed -n  -e 's/^ *port://gip' $2)
+      if ! [ -z $port ] && ! [ $port == "''" ]
+      then
+         varport="--port $port"
+      fi
+      file=$(sed -n  -e 's/^ *file://gip' $2)
+      if ! [ -z $file ] && ! [ $file == "''" ]
+      then
+         varfile="--file ${file}"
+      fi
+      loglevel=$(sed -n  -e 's/^ *loglevel://gip' $2)
+      if ! [ -z $loglevel ] && ! [ $loglevel == "''" ]
+      then
+         varloglevel="--loglevel ${loglevel}"
+      fi
+      shift 2
+      ;;
+    "" )
+      shift;
+      break
+      ;;
+  esac
+done
+python -m rosextpy.app.ros_gateway_service $varport $varfile $varloglevel

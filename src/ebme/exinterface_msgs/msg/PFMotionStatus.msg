@@ -1,0 +1,3 @@
+int32 motion_type
+int32 motion_status
+lgnav_common_msgs/PosXYDeg target_pose

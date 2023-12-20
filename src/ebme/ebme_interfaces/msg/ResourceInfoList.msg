@@ -1,0 +1,1 @@
+ResourceInfo[] rsc_list

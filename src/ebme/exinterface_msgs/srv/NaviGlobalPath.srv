@@ -1,0 +1,3 @@
+lgnav_common_msgs/PathMsg path_msg
+---
+int32 res

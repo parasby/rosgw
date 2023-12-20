@@ -1,0 +1,4 @@
+int32 action_id
+lgnav_common_msgs/PosXYZDeg position
+float64 goal_size
+float64 max_t_vel

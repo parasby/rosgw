@@ -1,0 +1,3 @@
+int32 status_id
+ActionInfo action_info
+MotionStatus motion_status

@@ -1,0 +1,18 @@
+<launch>
+  <arg name="port" default="9000" />
+  <arg name="file" default="" />
+  <arg name="loglevel" default="warning" />
+  <arg name="topics_glob" default="" />
+  <arg name="services_glob" default="" />
+  <arg name="params_glob" default="" />
+  <node name="ros_ws_gateway" pkg="rosextpy" exec="run_gateway" output="screen" respawn="true">
+      <param name="port" value="$(var port)"/>
+      <param name="file" value="$(var file)"/>
+      <param name="loglevel" value="$(var loglevel)"/>
+  </node>
+  <node name="rosapi" pkg="rosapi" exec="rosapi_node" respawn="true">
+    <param name="topics_glob" value="$(var topics_glob)"/>
+    <param name="services_glob" value="$(var services_glob)"/>
+    <param name="params_glob" value="$(var params_glob)"/>
+  </node>
+</launch>

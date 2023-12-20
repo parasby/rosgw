@@ -1,0 +1,6 @@
+string device_id
+SensorStatus sensor_status
+string manufacturer
+string model_name
+int32 sensor_id
+int32 is_error

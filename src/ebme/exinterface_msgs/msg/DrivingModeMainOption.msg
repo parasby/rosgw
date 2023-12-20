@@ -1,0 +1,7 @@
+int32 serving_mode
+int32 stuck_zero
+int32 floor_sensitivity
+float64 max_vel
+int32 narrow_mode
+int32 line_up_mode
+int32 lidar_filter_level

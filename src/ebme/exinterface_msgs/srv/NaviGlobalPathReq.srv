@@ -1,0 +1,4 @@
+lgnav_common_msgs/PosXYZDeg pose
+int32 gpp_type
+---
+int32 res

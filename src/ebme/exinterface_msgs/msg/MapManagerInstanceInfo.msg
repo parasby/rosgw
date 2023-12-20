@@ -1,0 +1,6 @@
+string full_path_grid_map_name
+string current_map_root_path
+string map_name
+string blackboard_name_for_grid_map
+float64 floor
+string map_dir_name

@@ -1,0 +1,3 @@
+slam_msgs/MapInfo3D map_info
+---
+int32 res

@@ -1,0 +1,16 @@
+[
+    {
+        "title":"jackal1",
+        "active": true,
+        "address": "ws://172.28.165.227:9001",
+        "publish": [
+            {"name":"/kitti/camera_color_left/image_raw", 
+              "messageType":"sensor_msgs/msg/Image",
+              "compression":"cbro-raw"
+            }
+        ],
+        "subscribe": [
+            {"name":"/cmd_vel", "messageType":"geometry_msgs/msg/Twist"}
+        ]
+    }
+]

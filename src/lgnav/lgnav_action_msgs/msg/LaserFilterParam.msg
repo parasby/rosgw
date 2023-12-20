@@ -1,0 +1,4 @@
+bool b_veiling_enabled
+LaserVeilingFilterParam st_veiling
+bool b_spike_noise_enabled
+LaserSpikeNoiseFilterParam st_spike_noise

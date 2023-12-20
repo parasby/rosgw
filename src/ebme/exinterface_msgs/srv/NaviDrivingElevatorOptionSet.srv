@@ -1,0 +1,4 @@
+uint32 type
+DrivingModeElevatorOption option
+---
+int32 res

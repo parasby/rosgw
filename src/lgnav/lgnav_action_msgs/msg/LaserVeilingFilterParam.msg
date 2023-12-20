@@ -1,0 +1,4 @@
+int32 n_neighbor
+int32 n_window
+float64 d_min_angle
+float64 d_max_angle

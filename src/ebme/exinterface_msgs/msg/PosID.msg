@@ -1,0 +1,2 @@
+uint32 id
+lgnav_common_msgs/PosXYZDeg pose

@@ -1,0 +1,1 @@
+lgnav_common_msgs/PosXYZDeg distance

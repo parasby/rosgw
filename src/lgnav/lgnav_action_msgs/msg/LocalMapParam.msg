@@ -1,0 +1,3 @@
+bool b_is_update
+int32 type_clear_recovery
+LaserFilterParam st_laser_filter

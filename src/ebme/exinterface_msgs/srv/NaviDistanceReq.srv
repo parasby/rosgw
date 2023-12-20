@@ -1,0 +1,3 @@
+lgnav_common_msgs/PosXYZDeg pose
+---
+int32 res

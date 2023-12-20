@@ -1,0 +1,6 @@
+float32 remain_navigation_distance
+float32 remain_expected_navigation_time_sec
+float32 path_distance
+float32 stacked_distance
+float32 goal_between_heading
+PFMotionStatus pf_motion_status

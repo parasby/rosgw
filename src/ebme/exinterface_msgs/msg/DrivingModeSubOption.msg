@@ -1,0 +1,9 @@
+int32 rotation_max_vel
+float32 warning_max_vel
+float32 cliff_max_vel
+float32 avoid_max_vel
+float32 curve_max_vel
+int32 sonar_on_off
+int32 safety_torque_lidar_on_off
+int32 safety_torque_sonar_on_off
+int32 gradient_increase_enable

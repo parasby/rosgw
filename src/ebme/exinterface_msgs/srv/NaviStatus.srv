@@ -1,0 +1,3 @@
+NaviStatus navi_status
+---
+int32 res

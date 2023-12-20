@@ -1,0 +1,4 @@
+ParamMsg msg
+int32 type
+---
+int32 res

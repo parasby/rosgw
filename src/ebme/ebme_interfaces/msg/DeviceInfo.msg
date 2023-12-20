@@ -1,0 +1,13 @@
+string device_id
+string nickname
+string version
+string main_state
+string sub_state
+string robot_type
+string map_name
+string branch_name
+string building_name
+int32 floor
+string language
+float32 battery_level
+string poi_code

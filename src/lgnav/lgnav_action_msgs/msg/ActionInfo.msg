@@ -1,0 +1,6 @@
+int32 action_id
+float32 remain_navigation_distance_m
+float32 remain_expected_navigation_time_sec
+float32 path_distance_m
+float32 stacked_distance_m
+float32 goal_between_heading_deg

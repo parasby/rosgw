@@ -1,0 +1,4 @@
+uint32 type
+DrivingModeMainOption option
+---
+int32 res
