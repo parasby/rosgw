@@ -490,7 +490,8 @@ class RosWsGatewayClient:
             mlogger.debug("Connection to ros ws bridge - %s", self.uri)
             # Start connection
             self.conn = websockets.client.connect(
-                self.uri, **self.connect_kwargs)
+                self.uri, ping_interval=None, **self.connect_kwargs)
+#                self.uri, **self.connect_kwargs)
             # get websocket
             self._ws = await self.conn.__aenter__()  # self.ws is WebSocketClientProtocol
 

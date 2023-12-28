@@ -515,5 +515,6 @@ async def exception_handler(request, _exception: SanicException):
 
 if __name__ == '__main__':
     # , single_process = True) #, single_process=True, debug=True)
-    app.run(host="0.0.0.0", port=OPTIONS.port, motd=False)
+    # app.run(host="0.0.0.0", port=OPTIONS.port, motd=False)
+    app.run(host="0.0.0.0", port=OPTIONS.port, motd=False, workers=10) # performance eval
     # single_process=True) # debug=True)

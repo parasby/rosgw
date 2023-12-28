@@ -7,6 +7,7 @@ FROM ros:foxy-ros-base as ros2_base
 ENV DEBIAN_FRONTEND=noninteractive
 ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         python3-pip \

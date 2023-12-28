@@ -152,8 +152,8 @@ def ros_to_text_dict(obj: Any) -> Any:
             results[name] = ros_to_text_dict(getattr(obj, name))
         return results
     if isinstance(obj, array.array):
-        # if obj.typecode in ('b', 'B', 'c'):
-        #     return pybase64.b64encode(obj.tobytes()).decode()
+        if obj.typecode in ('b', 'B', 'c'):
+            return pybase64.b64encode(obj.tobytes()).decode()
         return obj.tolist()  # for compatibility with rosbridge
     if isinstance(obj, numpy.ndarray):
         return obj.tolist()
@@ -210,10 +210,10 @@ def ros_from_text_dict(data: Any, obj: Any) -> Any:
                                         name, obj.__class__.__name__)
             return obj
         if isinstance(obj, array.array):
-            # if obj.typecode in ('b', 'B', 'c'):
-            #     obj.frombytes(pybase64.b64decode(data))
-            # else:
-            obj.fromlist(data)  # for compatibility with rosbridge
+            if isinstance(data, str):
+               obj.frombytes(pybase64.b64decode(data))
+            else:
+               obj.fromlist(data)  # for compatibility with rosbridge
             return obj
         if isinstance(obj, float):
             return float(data)
@@ -388,6 +388,18 @@ def ros_deserialize(data: bytes, cls_type: Any) -> Any:
     """
     return deserialize_message(data, cls_type)
 
+def raw_to_compress(obj: Any) -> bytes:
+    """raw_to_compress
+
+    Args:
+        obj (Any): target object to be compressed
+
+    Returns:
+        bytes: compressed data
+    """
+    
+    return Compressor.compress(obj)
+
 
 def ros_to_compress(obj: Any) -> bytes:
     """ros_to_compress
@@ -412,6 +424,18 @@ def ros_from_compress(data: bytes, obj: Any) -> Any:
         Any: target object decompressed from data
     """
     return ros_from_bin_dict(cbor.loads(Compressor.decompress(data)), obj)
+
+def raw_from_compress(data: bytes, obj: Any) -> Any:
+    """raw_from_compress
+
+    Args:
+        data (bytes): compressed data
+        obj (Any): target object to be decompressed
+
+    Returns:
+        Any: target object decompressed from data
+    """
+    return Compressor.decompress(data)
 
 
 class TypeModuleError(Exception):

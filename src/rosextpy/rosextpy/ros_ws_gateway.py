@@ -41,7 +41,7 @@ from rosextpy.node_manager import NodeManager, ROSServiceFailException
 from rosextpy.ext_type_support import (
     ros_to_text_dict, ros_to_bin_dict, ros_serialize, ros_deserialize)
 from rosextpy.ext_type_support import (
-    ros_from_text_dict, ros_from_bin_dict, ros_from_compress, ros_to_compress)
+    ros_from_text_dict, ros_from_bin_dict, ros_from_compress, raw_from_compress, ros_to_compress, raw_to_compress)
 from rosextpy.websocket_utils import WebSocketDisconnect
 
 mlogger = logging.getLogger('ros_ws_gateway')
@@ -188,6 +188,7 @@ class RosWsGateway():
                 message = json.dumps(data)
             # b = datetime.datetime.now()
             # print("mesage type is ", type(message))
+            #mlogger.debug("send %d bytes [byte=%r]", len(message), hasbytes)
             await self.wshandle.send(message)
             # c = datetime.datetime.now()
             # print("T: ",(b-a).microseconds/1000.0 , "ms ... ", (c-b).microseconds/1000.0,
@@ -425,9 +426,12 @@ class RosWsGateway():
             # _tnsecs = _target['tnsecs']
             # _ = _tsecs
             # _ = _tnsecs
-            return ros_deserialize(_target['bytes'], target_class)
+            #return ros_deserialize(_target['bytes'], target_class)
+            return _target['bytes'] # donot deserialize data: it wiil be RTPS message
         if _compression == 'zip':
             return ros_from_compress(_target, target_obj)
+        if _compression == 'rawzip':
+            return raw_from_compress(_target, target_obj)
         raise RosWsGatewayException(
             f'unknown compression methods={_compression}')
 
@@ -466,7 +470,7 @@ class RosWsGateway():
             _topic_type: Union[str, None] = cmd_data.get('type', None)
             _queue_length = cmd_data.get('queue_length', 0)
             _compression = cmd_data.get('compression', None)  # 221102
-            israw = bool(_compression == 'cbor-raw')
+            israw = bool(_compression == 'cbor-raw' or _compression == 'rawzip')
             if self.node_manager:
                 if _topic_type is None:
                     _topic_type = self.node_manager.get_topic_type(
@@ -875,6 +879,8 @@ class RosWsGateway():
                     "secs": secs, "nsecs": nsecs, "bytes": ros_serialize(data_mesg)}
         elif compression == 'zip':
             mesg_items[data_tag] = ros_to_compress(data_mesg)
+        elif compression == 'rawzip':
+            mesg_items[data_tag] = raw_to_compress(data_mesg)
         else:
             mlogger.debug('unknown compression methods %s', compression)
             raise RosWsGatewayException(
