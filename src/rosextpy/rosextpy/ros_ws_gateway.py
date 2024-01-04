@@ -880,7 +880,10 @@ class RosWsGateway():
         elif compression == 'zip':
             mesg_items[data_tag] = ros_to_compress(data_mesg)
         elif compression == 'rawzip':
-            mesg_items[data_tag] = raw_to_compress(data_mesg)
+            if isinstance(data_mesg, bytes):
+            	mesg_items[data_tag] = raw_to_compress(data_mesg)
+            else:
+                mesg_items[data_tag] = raw_to_compress(ros_serialize(data_mesg))
         else:
             mlogger.debug('unknown compression methods %s', compression)
             raise RosWsGatewayException(
