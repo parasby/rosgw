@@ -50,7 +50,7 @@ rosgw is a software agent to connect ROS components and others(REST, different s
           "publish": [     
               {"name":"/kitti/camera_color_left/image_raw",    <--local topics to forward to other gateway
                 "messageType":"sensor_msgs/msg/Image",
-                "compression":"cbro-raw"
+                "compression":"cbor-raw"
               }
           ],
           "subscribe": [
