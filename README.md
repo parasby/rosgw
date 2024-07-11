@@ -1,15 +1,17 @@
-# ROSGW: ROSGW is a websocket based ROS GATEWAY
-
-rosgw is a software agent to connect ROS components and others(REST, different subnet, etc.). It is inspired by [ros2-web-bridge](https://github.com/RobotWebTools/ros2-web-bridge)
+# ROS Gateway: Enhancing ROS Availability across Multiple Network Environments
 
 ## Features
 
-  * Support rosbridge v2 protocol
-  * Support ROS Service relay
-  * Support ROS Action relay 
-  * Configure Publish/Subscribe/Service/Action bridge function in runtime
-  * Support ROS to REST API configuration in runtime
-
+  * Support for rosbridge v2 protocol.
+  * ROS topic forwarding: Forward ROS topics from internal network to other networks.
+  * ROS Topic Reverse Forwarding: Allows ROS topics from other networks to be forwarded to the internal network.
+  * Expose ROS Services: Make ROS services on the internal network available to other networks.
+  * Reserve ROS Services: Make ROS services exposed on other networks available on the internal network.
+  * Expose ROS Actions: Make ROS actions exposed on the internal network available to other networks.
+  * Reserve ROS Actions: Make ROS actions exposed on other networks available on the internal nNetwork.
+  * Supports conversion from ROS to REST API and from REST API to ROS data.
+  * Inspired by [ros2-web-bridge](https://github.com/RobotWebTools/ros2-web-bridge)
+  
 ## Install and Run
 
 ### Run under Docker
@@ -50,7 +52,7 @@ rosgw is a software agent to connect ROS components and others(REST, different s
           "publish": [     
               {"name":"/kitti/camera_color_left/image_raw",    <--local topics to forward to other gateway
                 "messageType":"sensor_msgs/msg/Image",
-                "compression":"cbro-raw"
+                "compression":"cbor-raw"
               }
           ],
           "subscribe": [

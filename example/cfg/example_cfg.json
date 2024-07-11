@@ -6,7 +6,7 @@
         "publish": [
             {"name":"/kitti/camera_color_left/image_raw", 
               "messageType":"sensor_msgs/msg/Image",
-              "compression":"cbro-raw"
+              "compression":"cbor-raw"
             }
         ],
         "subscribe": [
