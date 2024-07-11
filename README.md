@@ -1,4 +1,4 @@
-# ROS-Gateway(rosgw): Enhancing ROS Availability across Multiple Network Environments
+# ROS Gateway: Enhancing ROS Availability across Multiple Network Environments
 
 ## Features
 
