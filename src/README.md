@@ -45,7 +45,7 @@ An example JSON request is as follows :
   "publish": [
     {
       "name": "/my_topic",
-      "messageType": "std_msgs/msg/String",
+      "type": "std_msgs/msg/String",
       "compression": "cbor-raw"
     }
   ]
@@ -54,7 +54,7 @@ An example JSON request is as follows :
 * address - the target gateway address to receive the specified topic.
 * publish - an array of the topic configuration to send to the target
 * publish.name - the topic name to send to the target
-* publish.messageType - the topic type to send to the target
+* publish.type - the topic type to send to the target
 * publish.compression - compression method : "cbor-raw", "cbor", "none"
 
 ### ADD Topic Subscribe API
@@ -71,7 +71,7 @@ An example JSON request is as follows :
   "subscribe": [
     {
       "name": "/my_topic",
-      "messageType": "std_msgs/msg/String",
+      "type": "std_msgs/msg/String",
       "compression": "cbor-raw"      
     }
   ]
@@ -80,7 +80,7 @@ An example JSON request is as follows :
 * address - the target gateway address to request to send the specified topic .
 * subscribe - an array of the topic configuration to receive from the target
 * subscribe.name - the topic name to receive from the target
-* subscribe.messageType - the topic type to receive from the target
+* subscribe.type - the topic type to receive from the target
 * subscribe.compression - compression method : "cbor-raw", "cbor", "none"
 
 
@@ -98,7 +98,7 @@ An example JSON request is as follows :
   "service": [
     {
       "service": "add_two_ints",
-      "serviceType": "srv_tester_if.srv.AddTwoInts"
+      "type": "srv_tester_if.srv.AddTwoInts"
     }
   ]
 }
@@ -106,7 +106,7 @@ An example JSON request is as follows :
 * address - the target gateway address to be allowed for the ROS service request
 * service - an array of the service configuration to be exposed to the target
 * service.service - the service name to be exposed to the target
-* service.serviceType - the service type to be exposed to the target
+* service.type - the service type to be exposed to the target
 
 ### ADD Action Expose API
 
@@ -122,7 +122,7 @@ An example JSON request is as follows :
   "action": [
     {
       "action": "fibonacci",
-      "actionType": "action_tester_if.action.Fibonacci"
+      "type": "action_tester_if.action.Fibonacci"
     }
   ]
 }
@@ -130,7 +130,7 @@ An example JSON request is as follows :
 * address -the target gateway address to be allowed for the ROS action request
 * action - an array of the action configuration to be exposed to the target
 * action.action - the action name to be exposed to the target
-* action.actionType - the action type to be exposed to the target
+* action.type - the action type to be exposed to the target
 
 ### ADD ROS-REST Mapping API
 
@@ -213,10 +213,10 @@ An example JSON config example is as follows : myconfig.json
         "active": true,
         "address": "ws://192.168.0.15:9000",
         "publish": [
-            {"name":"/kitti/camera_color_left/image_raw", "messageType":"sensor_msgs/msg/Image", "compression" : "cbor-raw"}
+            {"name":"/kitti/camera_color_left/image_raw", "type":"sensor_msgs/msg/Image", "compression" : "cbor-raw"}
         ],
         "subscribe": [
-            {"name":"/cmd_vel", "messageType":"geometry_msgs/msg/Twist"}
+            {"name":"/cmd_vel", "type":"geometry_msgs/msg/Twist"}
         ]
     }
 ]

@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # rosextpy.ros_rpc_gateway_client (ros-ws-gateway)
-# Author: paraby@gmail.com
+# Author: (ByoungYoul Song)paraby@gmail.com
 """ros_rest_gateway
 """
 import logging

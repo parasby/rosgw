@@ -14,3 +14,6 @@ fix bugs where nodes do not appear when clients reconnect
 
 add support ROS humble
 add support loglevel setting in gateway_launch.xml
+
+## 2024-04-19
+modify ROS action protocol to fit ROSBridge Protocol 2.0 Nov. 2023 version

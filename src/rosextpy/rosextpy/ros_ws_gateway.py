@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # filename: rosextpy.ros_ws_gateway
-# author: parasby@gmail.com
+# author: ByoungYoul Song(parasby@gmail.com)
 
 # import sys
 import asyncio
@@ -132,7 +132,7 @@ class RosWsGateway():
             # The gateway plays a role of a service server in the local network
             "unadvertise_service": self._op_unadvertise_service,
             # The gateway stops the role of a service server
-            "call_action": self._op_call_action,
+            "send_action_goal": self._op_send_action_goal, # modifed op name when Apr. 2024
             # The gateway receives a ROS call action and send a JSON call action
             #   to another gateway
             "action_result": self._op_action_result,
@@ -144,7 +144,11 @@ class RosWsGateway():
             "advertise_action": self._op_advertise_action,
             # The gateway plays a role of a action server in the local network
             "unadvertise_action": self._op_unadvertise_action,
-            # The gateway stops the role of a action server
+            # The gateway stops the role of a action server             
+            # "reserve_service": self._op_reserve_service, # updated when Apr. 2024
+            # # The gateway send service reservation to remote gateway.
+            # "reserve_action": self._op_reserve_action, # updated when Apr. 2024
+            # # The gateway send action reservation to remote gateway.
         }
         # key : topicName, value : (topicType, compression)
         self.published_topic: Dict[str, Tuple[str, str]] = {}
@@ -170,6 +174,8 @@ class RosWsGateway():
         self._adv_action_servers: Dict[str, Dict[str, Any]] = {}
         self.exposed_services: Dict[str, str] = {}
         self.exposed_actions: Dict[str, str] = {}
+        self.reserved_services: Dict[str, str] = {}
+        self.reserved_actions: Dict[str, str] = {}
 
     async def send(self, data: Dict[str, Any], hasbytes: bool = False) -> None:
         """send
@@ -510,6 +516,7 @@ class RosWsGateway():
 
     async def _op_call_service(self, cmd_data: Dict):
         mlogger.debug("_op_call_service  %s", cmd_data)
+        
         try:
             _service_name = cmd_data['service']
             # In new Bridge Protocol , it is option
@@ -613,14 +620,14 @@ class RosWsGateway():
         return "OK"
 
     #
-    # advertise_service
+    # advertise_action
     # command [
     #           action : actionName
     #           type    : serviceTypeName
     #         ]
     #
     async def _op_advertise_action(self, cmd_data: Dict[str, Any]):
-        mlogger.debug("_op_advertise_action1111  %s", cmd_data)
+        mlogger.debug("_op_advertise_action  %s", cmd_data)
         try:
             _action_name = cmd_data['action']
             _type_name = cmd_data['type']
@@ -638,11 +645,11 @@ class RosWsGateway():
 
         return "OK"
 
-    async def _op_call_action(self, cmd_data: Dict[str, Any]):
-        mlogger.debug("_op_call_action  %s", cmd_data)
+    async def _op_send_action_goal(self, cmd_data: Dict[str, Any]):
+        mlogger.debug("_op_send_action_goal  %s", cmd_data)
         try:
             _action_name = cmd_data['action']
-            _action_type = cmd_data.get('type', None)
+            _action_type = cmd_data.get('action_type', None) or cmd_data.get('type', None)
             _args = cmd_data.get('args', None)
             _call_id = cmd_data.get('id', None)
             _compression = cmd_data.get('compression', None)
@@ -785,8 +792,8 @@ class RosWsGateway():
         mlogger.debug("_ros_action_proxy_callback")
 
         call_id = ''.join(['act:', uuid.uuid4().hex])
-        callmsg = {'op': 'call_action', 'id': call_id,
-                   'action': action_name, 'type': action_type}
+        callmsg = {'op': 'send_action_goal', 'id': call_id,
+                   'action': action_name, 'action_type': action_type}
 
         ctx = self._adv_action_servers.get(action_name)
         if ctx:
@@ -802,7 +809,7 @@ class RosWsGateway():
                 return await rq_future  # wait response and return it to ROS rclpy logic
             except ROSServiceFailException:
                 mlogger.debug(
-                    "The call_action for [%s] gets an error", action_name)
+                    "The send_action_goal for [%s] gets an error", action_name)
                 raise
             finally:
                 if self._adv_action_servers.get(action_name, None):
@@ -1029,6 +1036,59 @@ class RosWsGateway():
                         data['compression'] = _compression
 
                     await self.send(data)
+
+                elif item_tuple[0] == 'rsvsrv':  # reserve service to remote gateway
+                    reqid = ''.join(
+                        ['rsvsrv:', str(self.bridge_id), ':', str(self.id_counter)])                    
+                    data = {'op': 'reserve_service', 'id': reqid,
+                            'service': item_tuple[1], 'type': item_tuple[2],
+                            'compression':  _compression}
+                    self.reserved_services[item_tuple[1]] = item_tuple[2]
+                    if _compression is not None:
+                        data['compression'] = _compression
+                    #await self.send(data) #When a call is made, a remote client is created, so that part is not necessary.
+                    await self._op_advertise_service( #Executed when the remote operation succeeds
+                        {'op': 'advertise_service', 'id': reqid,
+                         'service': item_tuple[1], 'type': item_tuple[2],
+                         'compression':  _compression})
+
+                elif item_tuple[0] == 'delrsvsrv':  # hide exposed service to remote gateway
+                    reqid = ''.join(
+                        ['delrsvsrv:', str(self.bridge_id), ':', str(self.id_counter)])
+                    await self._op_unadvertise_service(
+                        {'op': 'unadvertise_service', 'id' : reqid, 
+                         'service': item_tuple[1]})
+                    data = {'op': 'cancel_reserve_service', 'id': reqid,
+                            'service': item_tuple[1]}
+                    #await self.send(data) #When a call is made, a remote client is created, so that part is not necessary.
+                    self.reserved_services.pop(item_tuple[1], None)
+
+                elif item_tuple[0] == 'rsvact':  # expose action to remote gateway
+                    reqid = ''.join(
+                        ['rsvact:', str(self.bridge_id), ':', str(self.id_counter)])                    
+                    data = {'op': 'reserve_action', 'id': reqid,
+                            'action': item_tuple[1], 'type': item_tuple[2],
+                            'compression':  _compression }
+                    self.reserved_actions[item_tuple[1]] = item_tuple[2]
+                    if _compression is not None:
+                        data['compression'] = _compression
+                    #await self.send(data) #When a call is made, a remote client is created, so that part is not necessary.
+                    await self._op_advertise_action( # Executed when the remote  operation succeeds
+                        {'op': '_op_advertise_action', 'id': reqid,
+                         'action': item_tuple[1], 'type': item_tuple[2],
+                         'compression':  _compression})                    
+
+                elif item_tuple[0] == 'delrsvact':  # hide exposed action to remote gateway
+                    reqid = ''.join(
+                        ['delrsvact:', str(self.bridge_id), ':', str(self.id_counter)])
+                    await self._op_unadvertise_action(
+                        {'op': 'unadvertise_action', 'id' : reqid, 
+                         'action': item_tuple[1]})
+                    data = {'op': 'cancel_reserve_action', 'id': reqid,
+                            'action': item_tuple[1]}
+                    #await self.send(data)  #When a call is made, a remote client is created, so that part is not necessary.                   
+                    self.reserved_actions.pop(item_tuple[1], None) 
+
                 else:
                     mlogger.debug("Unknwon command %s", item_tuple[0])
             except Exception as err:
@@ -1156,4 +1216,30 @@ class RosWsGateway():
         mlogger.debug("add_trans_publish")
         self.batch_queue.put_nowait(
             ('trpub', local_topic, topic_type,
-                israw, compression, remote_topic))  # 230427
+                israw, compression, remote_topic))  # 230427        
+               
+    def reserve_service(
+            self, srv_name: str, srv_type: Union[str, None],
+            israw: bool = False, compression: Union[str, None] = None):  # 240419
+        """ reserve_service """
+        mlogger.debug("reserve_service")
+        self.batch_queue.put_nowait(
+            ('rsvsrv', srv_name, srv_type, israw, compression))
+        
+    def cancel_reserve_service(self, srv_name: str): # 240419
+        """ cancel_reserve_service """
+        mlogger.debug("cancel_reserve_service")
+        self.batch_queue.put_nowait(('delrsvsrv', srv_name, "", False, None))
+
+    def reserve_action(
+            self, act_name: str, act_type: Union[str, None],
+            israw: bool = False, compression: Union[str, None] = None): # 240419
+        """ reserve_action """
+        mlogger.debug("reserve_action")
+        self.batch_queue.put_nowait(
+            ('rsvact', act_name, act_type, israw, compression))
+
+    def cancel_reserve_action(self, act_name: str): # 240419
+        """ cancel_reserve_action """
+        mlogger.debug("cancel_reserve_action")
+        self.batch_queue.put_nowait(('delrsvact', act_name, "", False, None))        

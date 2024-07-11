@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # rosextpy.ros_node_manager (ros-ws-gateway)
-# Author: parasby@gmail.com
+# Author: (ByoungYoul Song)parasby@gmail.com
 #
 
 """ros2 subscription and publish management

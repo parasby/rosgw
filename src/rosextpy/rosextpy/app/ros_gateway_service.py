@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # rosextpy.ros_gateway_agent (ros-ws-gateway)
-# Author: parasby@gmail.com
+# Author: ByoungYoul Song(parasby@gmail.com)
 """ros_gateway_agent
 """
 import os
@@ -75,7 +75,7 @@ class GatewayPublishRule(BaseModel):
     publish: List[Dict[str, str]] = \
         Field("[]",
               example=[{"name": "/my_topic",
-                        "messageType": "std_msgs/msg/String", "compression": "cbor-raw"}])
+                        "type": "std_msgs/msg/String", "compression": "cbor-raw"}])
 
 
 class GatewayTransPublishRule(BaseModel):
@@ -84,7 +84,7 @@ class GatewayTransPublishRule(BaseModel):
     publish: List[Dict[str, str]] = \
         Field("[]",
               example=[{"name": "/my_topic",
-                        "messageType": "std_msgs/msg/String",
+                        "type": "std_msgs/msg/String",
                         "remote_name": "/remote_topic",
                         "compression": "cbor-raw"}])
 
@@ -95,7 +95,7 @@ class GatewaySubscribeRule(BaseModel):
     subscribe: List[Dict[str, str]] = \
         Field("[]",
               example=[{"name": "/my_topic",
-                        "messageType": "std_msgs/msg/String", "israw": False}])
+                        "type": "std_msgs/msg/String", "israw": False}])
 
 
 class GatewayServiceRule(BaseModel):
@@ -103,8 +103,8 @@ class GatewayServiceRule(BaseModel):
     address: str = Field("", example="ws://localhost:9000")
     service: List[Dict[str, str]] = \
         Field("[]",
-              example=[{"service": "add_two_ints",
-                        "serviceType": "srv_tester_if.srv.AddTwoInts",
+              example=[{"name": "add_two_ints",
+                        "type": "srv_tester_if.srv.AddTwoInts",
                         "israw": False}])
 
 
@@ -113,8 +113,8 @@ class GatewayActionRule(BaseModel):
     address: str = Field("", example="ws://localhost:9000")
     action: List[Dict[str, str]] = \
         Field("[]",
-              example=[{"action": "fibonacci",
-                        "actionType": "action_tester_if.action.Fibonacci",
+              example=[{"name": "fibonacci",
+                        "type": "action_tester_if.action.Fibonacci",
                         "israw": False}])
 
 
@@ -361,9 +361,9 @@ async def subscriber_remove(_, body: GatewaySubscribeRule) -> JSONResponse:
                   {"application/json": GatewayRequestResult},
                   "operation result")
 @validate(json=GatewayServiceRule)
-async def service_expose(_, body: GatewayServiceRule) -> JSONResponse:
-    """service_expose"""
-    results = AGENT.api_service_expose(  # type: ignore
+async def expose_service(_, body: GatewayServiceRule) -> JSONResponse:
+    """expose_service"""
+    results = AGENT.api_expose_service(  # type: ignore
         body.address, body.service)  # type: ignore
     return json({"result": results})
 
@@ -395,9 +395,9 @@ async def service_hide(_, body: GatewayServiceRule) -> JSONResponse:
                   {"application/json": GatewayRequestResult},
                   "operation result")
 @validate(json=GatewayActionRule)
-async def action_expose(_, body: GatewayActionRule) -> JSONResponse:
-    """action_expose"""
-    results = AGENT.api_action_expose(  # type: ignore
+async def expose_action(_, body: GatewayActionRule) -> JSONResponse:
+    """expose_action"""
+    results = AGENT.api_expose_action(  # type: ignore
         body.address, body.action)  # type: ignore
     return json({"result": results})
 

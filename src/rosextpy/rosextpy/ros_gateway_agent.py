@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 # rosextpy.ros_gateway_agent (ros2-ws-gateway)
-# Author: parasby@gmail.com
+# Author: (ByoungYoul Song)parasby@gmail.com
 """ros_gateway_agent
 """
 
@@ -661,9 +661,9 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             ex:{'title' : 'a1', 
                 'active' : True,
                 'address': 'ws://xxx.xxx.xx.xxx:9090', 
-                'publish': [{'name': '/example_topic', 'messageType': 'std_msgs/msg/String'},
-                            {'name': '/my_topic', 'messageType': 'std_msgs/msg/String'}], 
-                'subscribe': [{'name': '/my_topic', 'messageType': 'std_msgs/msg/String'}]
+                'publish': [{'name': '/example_topic', 'type': 'std_msgs/msg/String'},
+                            {'name': '/my_topic', 'type': 'std_msgs/msg/String'}], 
+                'subscribe': [{'name': '/my_topic', 'type': 'std_msgs/msg/String'}]
                 },
                 {
                     "service_name": "detect service",
@@ -746,9 +746,9 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
                 ex:{'title' : 'a1', 
                     'active' : True,
                     'address': 'ws://xxx.xxx.xx.xxx:9090', 
-                    'publish': [{'name': '/example_topic', 'messageType': 'std_msgs/msg/String'},
-                                {'name': '/my_topic', 'messageType': 'std_msgs/msg/String'}], 
-                    'subscribe': [{'name': '/my_topic', 'messageType': 'std_msgs/msg/String'}]
+                    'publish': [{'name': '/example_topic', 'type': 'std_msgs/msg/String'},
+                                {'name': '/my_topic', 'type': 'std_msgs/msg/String'}], 
+                    'subscribe': [{'name': '/my_topic', 'type': 'std_msgs/msg/String'}]
                     }
         """
         mlogger.debug("_apply_gw_config %s", data)
@@ -767,17 +767,25 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             if subcfg is not None:
                 self.api_subscriber_add(_uri, subcfg)
 
-            srvcfg = data.get('expose-service', None)
-            if srvcfg is not None:
-                self.api_service_expose(_uri, srvcfg)
+            expsrvcfg = data.get('expose-service', None)
+            if expsrvcfg is not None:
+                self.api_expose_service(_uri, expsrvcfg)
 
-            actcfg = data.get('expose-action', None)
-            if actcfg is not None:
-                self.api_action_expose(_uri, actcfg)
+            expactcfg = data.get('expose-action', None)
+            if expactcfg is not None:
+                self.api_expose_action(_uri, expactcfg)
 
             trpubcfg = data.get('trans-publish', None)
             if trpubcfg is not None:
                 self.api_trans_publisher_add(_uri, trpubcfg)
+
+            rsvsrvfg = data.get('reserve-service', None)
+            if rsvsrvfg is not None:
+                self.api_reserve_service(_uri, rsvsrvfg)
+
+            rsvactcfg = data.get('reserve-action', None)
+            if rsvactcfg is not None:
+                self.api_reserve_action(_uri, rsvactcfg)
 
             return "ok"
         except Exception:
@@ -829,21 +837,18 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             "ok" 
         Examples:
             api.add_publish("ws://targetgw",
-                [{name:"/my_topic", messageType:"std_msgs/msg/String", israw: False}])
+                [{name:"/my_topic", type:"std_msgs/msg/String", israw: False}])
         """
         mlogger.debug("api_publisher_add %s", uri)
         try:
             for cfg in rule:
-                codekey = self._get_codekey(uri, 'publish', list(cfg.values()))
-                self.gw_config_log.add_config_log(uri, 'publish', codekey, cfg)
+                codekey = self._get_codekey(uri, 'topic', list(cfg.values())) # opr 'publish' --> 'topic'
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
-                if _gw is not None:  # connection remaied
-                    mlogger.debug(
-                        "publisher reused for [%s]:[%s] ", uri, cfg['name'])
-                    _gw.add_publish(cfg['name'], cfg['messageType'],
-                                    (cfg.get('israw', 'False') != 'False'),
-                                    cfg.get('compression', None))
+                if _gw is not None:  # there is an existring topic client
+                    mlogger.warn(
+                        "The topic agent for [%s] exists :[%s] ", uri, cfg['name'])
                 else:
+                    self.gw_config_log.add_config_log(uri, 'publish', codekey, cfg)
                     self._run_gateway_client(uri, codekey, 'publish', cfg)
             return "ok"
         except Exception:
@@ -861,30 +866,25 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             "ok" 
         Examples:
             api.add_subscribe("ws://targetgw",
-                [{name:"/my_topic", messageType:"std_msgs/msg/String"}])
+                [{name:"/my_topic", type:"std_msgs/msg/String"}])
         """
         mlogger.debug("api_subscriber_add %s", uri)
         try:
             for cfg in rule:
-                codekey = self._get_codekey(
-                    uri, 'subscribe', list(cfg.values()))
-                self.gw_config_log.add_config_log(
-                    uri, 'subscribe', codekey, cfg)
+                codekey = self._get_codekey(uri, 'topic', list(cfg.values()))
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
-                if _gw is not None:
-                    mlogger.debug(
-                        "subscriber reused for [%s]:[%s] ", uri, cfg['name'])
-                    _gw.add_subscribe(cfg['name'], cfg['messageType'],
-                                      (cfg.get('israw', 'False') != 'False'),
-                                      cfg.get('compression', None))
+                if _gw is not None:  # there is an existring topic client
+                    mlogger.warn(
+                        "The topic agent for [%s] exists :[%s] ", uri, cfg['name'])
                 else:
+                    self.gw_config_log.add_config_log(uri, 'subscribe', codekey, cfg)
                     self._run_gateway_client(uri, codekey, 'subscribe', cfg)
             return "ok"
         except Exception:
             mlogger.debug(traceback.format_exc())
             return "error"
 
-    def api_service_expose(self, uri: str, rule: List[Dict[str, str]]):
+    def api_expose_service(self, uri: str, rule: List[Dict[str, str]]):
         """ set the service to be exposed to the specified gateway.            
         Args:
             uri : target gateway address
@@ -892,23 +892,19 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
         Returns:
             "ok" 
         Examples:
-            api.api_service_expose("ws://targetgw",
-                [{service:"add_two_ints", "serviceType:"srv_tester_if.srv.AddTwoInts"}])
+            api.api_expose_service("ws://targetgw",
+                [{name:"add_two_ints", "type:"srv_tester_if.srv.AddTwoInts"}])
         """
-        mlogger.debug("api_service_expose %s", uri)
+        mlogger.debug("api_expose_service %s", uri)
         try:
             for cfg in rule:
                 codekey = self._get_codekey(uri, 'service', list(cfg.values()))
-                self.gw_config_log.add_config_log(
-                    uri, 'service', codekey,  cfg)
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
                 if _gw is not None:
-                    mlogger.debug(
-                        "service reused for [%s]:[%s] ", uri, cfg['service'])
-                    _gw.expose_service(cfg['service'], cfg['serviceType'],
-                                       (cfg.get('israw', 'False') != 'False'),
-                                       cfg.get('compression', None))
+                    mlogger.warn(
+                        "The service agent for [%s] exists :[%s] ", uri, cfg['name'])
                 else:
+                    self.gw_config_log.add_config_log(uri, 'expose-service', codekey, cfg)
                     self._run_gateway_client(
                         uri, codekey, 'expose-service', cfg)
             return "ok"
@@ -916,7 +912,7 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             mlogger.debug(traceback.format_exc())
             return "error"
 
-    def api_action_expose(self, uri: str, rule: List[Dict[str, str]]):
+    def api_expose_action(self, uri: str, rule: List[Dict[str, str]]):
         """ set the action to be exposed to the specified gateway.            
         Args:
             uri : target gateway address
@@ -924,22 +920,19 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
         Returns:
             "ok" 
         Examples:
-            api.api_action_expose("ws://targetgw",
-                [{action:"fibonacci", actionType:"action_tester_if.action.Fibonacci"}])
+            api.api_expose_action("ws://targetgw",
+                [{name:"fibonacci", type:"action_tester_if.action.Fibonacci"}])
         """
-        mlogger.debug("api_action_expose %s", uri)
+        mlogger.debug("api_expose_action %s", uri)
         try:
             for cfg in rule:
                 codekey = self._get_codekey(uri, 'action', list(cfg.values()))
-                self.gw_config_log.add_config_log(uri, 'action', codekey, cfg)
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
                 if _gw is not None:
-                    mlogger.debug(
-                        "action reused for [%s]:[%s] ", uri, cfg['action'])
-                    _gw.expose_action(cfg['action'], cfg['actionType'],
-                                      (cfg.get('israw', 'False') != 'False'),
-                                      cfg.get('compression', None))
+                    mlogger.warn(
+                        "The action agent for [%s] exists :[%s] ", uri, cfg['name'])
                 else:
+                    self.gw_config_log.add_config_log(uri, 'expose-action', codekey, cfg)
                     self._run_gateway_client(
                         uri, codekey, 'expose-action', cfg)
 
@@ -960,12 +953,12 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             "ok" If successful, "unknown gateway address" otherwise.
         Examples:
             api.api_remove_publish("ws://targetgw",
-                [{name:"/my_topic", messageType:"std_msgs/msg/String"}])
+                [{name:"/my_topic", type:"std_msgs/msg/String"}])
         """
         mlogger.debug("api_publisher_remove %s", uri)
         try:
             for cfg in rule:
-                codekey = self._get_codekey(uri, 'publish', list(cfg.values()))
+                codekey = self._get_codekey(uri, 'topic', list(cfg.values()))
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
                 if _gw is not None:
                     _gw.remove_publish(cfg['name'])
@@ -985,13 +978,13 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             "ok" If successful, "unknown gateway address" otherwise.
         Examples:
             api.api_remove_subscribe("ws://targetgw",
-                [{name:"/my_topic", messageType:"std_msgs/msg/String"}])
+                [{name:"/my_topic", type:"std_msgs/msg/String"}])
         """
         mlogger.debug("api_subscriber_remove %s", uri)
         try:
             for cfg in rule:
                 codekey = self._get_codekey(
-                    uri, 'subscribe', list(cfg.values()))
+                    uri, 'topic', list(cfg.values()))
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
                 if _gw is not None:
                     _gw.remove_subscribe(cfg['name'])
@@ -1011,7 +1004,7 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             "ok" If successful, "unknown gateway address" otherwise.
         Examples:
             api.api_service_hide("ws://targetgw",
-                [{service:"add_two_ints"}])
+                [{name:"add_two_ints"}])
         """
         mlogger.debug("api_service_hide %s", uri)
         try:
@@ -1019,9 +1012,9 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
                 codekey = self._get_codekey(uri, 'service', list(cfg.values()))
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
                 if _gw is not None:
-                    _gw.hide_service(cfg['service'])
+                    _gw.hide_service(cfg['name'])
                     self.gw_config_log.remove_config_log(
-                        uri, 'service', codekey)
+                        uri, 'expose-service', codekey)
             return "ok"
         except Exception:
             mlogger.debug(traceback.format_exc())
@@ -1036,7 +1029,7 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             "ok" If successful, "unknown gateway address" otherwise.
         Examples:
             api.api_action_hide("ws://targetgw",
-                [{action:"fibonacci"])
+                [{name:"fibonacci"])
         """
         mlogger.debug("api_action_hide %s", uri)
         try:
@@ -1044,9 +1037,9 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
                 codekey = self._get_codekey(uri, 'action', list(cfg.values()))
                 _gw = self.gwc_map.get_codekey_client(uri, codekey)
                 if _gw is not None:
-                    _gw.hide_action(cfg['action'])
+                    _gw.hide_action(cfg['name'])
                     self.gw_config_log.remove_config_log(
-                        uri, 'action', codekey)
+                        uri, 'expose-action', codekey)
             return "ok"
         except Exception:
             mlogger.debug(traceback.format_exc())
@@ -1120,7 +1113,7 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             {
                 'testuri1': {
                     'publish': [
-                        {'name':'/example_topic', 'messageType' : 'std_msgs/msg/String'}
+                        {'name':'/example_topic', 'type' : 'std_msgs/msg/String'}
                     ]
                 }
             }
@@ -1164,7 +1157,7 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
             "ok" 
         Examples:
             api.api_trans_publisher_add("ws://targetgw",
-                [{name:"/my_topic", messageType:"std_msgs/msg/String", 
+                [{name:"/my_topic", type:"std_msgs/msg/String", 
                 "remote_name", "/remote/mytopic", israw: False, compression: None}])
         """
         mlogger.debug("api_trans_publisher_add %s", uri)
@@ -1178,7 +1171,7 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
                 if _gw is not None:  # connection remaied
                     mlogger.debug(
                         "trans_publisher reused for [%s]:[%s] ", uri, cfg['name'])
-                    _gw.add_trans_publish(cfg['name'], cfg['messageType'],
+                    _gw.add_trans_publish(cfg['name'], cfg['type'],
                                           cfg['remote_name'],
                                           (cfg.get('israw', 'False') != 'False'),
                                           cfg.get('compression', None))
@@ -1207,3 +1200,61 @@ class RosWsGatewayAgent():  # pylint : disable=too-many-instance-attributes
         """
         if self.endpoint is not None:
             await self.endpoint.serve(websocket, ws_provider, request)
+
+
+    def api_reserve_service(self, uri: str, rule: List[Dict[str, str]]):
+        """ set the service to be exposed to the specified gateway.            
+        Args:
+            uri : target gateway address
+            rule (List[str]): list of service expose rule        
+        Returns:
+            "ok" 
+        Examples:
+            api.api_reserve_service("ws://targetgw",
+                [{name:"add_two_ints", "type:"srv_tester_if.srv.AddTwoInts"}])
+        """
+        mlogger.debug("api_reserve_service %s", uri)
+        try:
+            for cfg in rule:
+                codekey = self._get_codekey(uri, 'service', list(cfg.values()))
+                _gw = self.gwc_map.get_codekey_client(uri, codekey)
+                if _gw is not None:
+                    mlogger.warn(
+                        "The service agent for [%s] exists :[%s] ", uri, cfg['name'])
+                else:
+                    self.gw_config_log.add_config_log(uri, 'reserve-service', codekey, cfg)
+                    self._run_gateway_client(
+                        uri, codekey, 'reserve-service', cfg)
+            return "ok"
+        except Exception:
+            mlogger.debug(traceback.format_exc())
+            return "error"
+
+    def api_reserve_action(self, uri: str, rule: List[Dict[str, str]]):
+        """ set the action to be exposed to the specified gateway.            
+        Args:
+            uri : target gateway address
+            rule (List[str]): list of action expose rule        
+        Returns:
+            "ok" 
+        Examples:
+            api.api_reserve_action("ws://targetgw",
+                [{name:"fibonacci", type:"action_tester_if.action.Fibonacci"}])
+        """
+        mlogger.debug("api_reserve_action %s", uri)
+        try:
+            for cfg in rule:
+                codekey = self._get_codekey(uri, 'action', list(cfg.values()))
+                _gw = self.gwc_map.get_codekey_client(uri, codekey)
+                if _gw is not None:
+                    mlogger.warn(
+                        "The action agent for [%s] exists :[%s] ", uri, cfg['name'])
+                else:
+                    self.gw_config_log.add_config_log(uri, 'reserve-action', codekey, cfg)
+                    self._run_gateway_client(
+                        uri, codekey, 'reserve-action', cfg)
+
+            return "ok"
+        except Exception:
+            mlogger.debug(traceback.format_exc())
+            return "error"

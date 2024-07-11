@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # rosextpy.ros_type_support_manager (ros2-ws-gateway)
-# Author: parasby@gmail.com
+# Author: ByoungYoul Song(parasby@gmail.com)
 """ROS IDL typesupport agent
  share type information(msg files) and runtime time reload
 """

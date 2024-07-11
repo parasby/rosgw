@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # rosextpy.ros_ws_gateway_client (ros2-ws-gateway)
-# Author: parasby@gmail.com
+# Author: ByoungYoul Song(parasby@gmail.com)
 """ros_ws_gateway_client
 """
 

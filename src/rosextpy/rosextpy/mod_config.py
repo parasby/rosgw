@@ -21,12 +21,12 @@
 # SOFTWARE.
 
 # rosextpy.websocket_utils (ros2-ws-gateway)
-# Author: parasby@gmail.com
+# Author: (ByoungYoul Song)parasby@gmail.com
 
 """config modile
 """
 
 WS_CONFIG = {
-    "wsf" : "fastapi"
+    "wsf" : "sanic"
 }
 

@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 # rosextpy.ext_type_support (ros2-ws-gateway)
-# Author: parasby@gmail.com
+# Author: ByoungYoul Song(parasby@gmail.com)
 
 
 # run the following instructions before using this module

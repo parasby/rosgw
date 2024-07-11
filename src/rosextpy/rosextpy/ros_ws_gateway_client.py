@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # rosextpy.ros_ws_gateway_client (ros2-ws-gateway)
-# Author: parasby@gmail.com
+# Author: ByoungYoul Song(parasby@gmail.com)
 """ros_ws_gateway_client
 """
 
@@ -242,6 +242,14 @@ class RosWsGatewayClient:
         self._req_expose_action_handlers: List[
             Callable[[str, str, bool, str], None]] = []
         self._req_hide_action_handlers: List[Callable[[str], None]] = []
+        self._req_reserve_service_handlers: List[
+            Callable[[str, str, bool, str], None]] = []
+        self._req_cancel_rsv_service_handlers: List[
+            Callable[[str], None]] = []
+        self._req_reserve_action_handlers: List[
+            Callable[[str, str, bool, str], None]] = []
+        self._req_cancel_rsv_action_handlers: List[
+            Callable[[str], None]] = []
 
         # event loop for multi threading event loop
         self.loop = loop if loop is not None else asyncio.get_event_loop()
@@ -249,23 +257,31 @@ class RosWsGatewayClient:
     def run_operation(self, opr: str, cfg: Dict) -> bool:
         """run_operation"""
         if opr == 'publish':
-            self.add_publish(cfg['name'], cfg['messageType'],
+            self.add_publish(cfg['name'], cfg['type'],
                              (cfg.get('israw', 'False') != 'False'),
                              cfg.get('compression', None))
         elif opr == 'subscribe':
-            self.add_subscribe(cfg['name'], cfg['messageType'],
+            self.add_subscribe(cfg['name'], cfg['type'],
                                (cfg.get('israw', 'False') != 'False'),
                                cfg.get('compression', None))
         elif opr == 'expose-service':
-            self.expose_service(cfg['service'], cfg['serviceType'],
+            self.expose_service(cfg['name'], cfg['type'],
                                 (cfg.get('israw', 'False') != 'False'),
                                 cfg.get('compression', None))
         elif opr == 'expose-action':
-            self.expose_action(cfg['action'], cfg['actionType'],
+            self.expose_action(cfg['name'], cfg['type'],
+                               (cfg.get('israw', 'False') != 'False'),
+                               cfg.get('compression', None))
+        elif opr == 'reserve-service':
+            self.reserve_service(cfg['name'], cfg['type'],
+                                (cfg.get('israw', 'False') != 'False'),
+                                cfg.get('compression', None))
+        elif opr == 'reserve-action':
+            self.reserve_action(cfg['name'], cfg['type'],
                                (cfg.get('israw', 'False') != 'False'),
                                cfg.get('compression', None))
         elif opr == 'trans-publish':
-            self.add_trans_publish(cfg['name'], cfg['messageType'],
+            self.add_trans_publish(cfg['name'], cfg['type'],
                                    cfg['remote_name'],
                                    (cfg.get('israw', 'False') != 'False'),
                                    cfg.get('compression', None))
@@ -361,6 +377,50 @@ class RosWsGatewayClient:
         """
         if callbacks is not None:
             self._req_hide_action_handlers.extend(callbacks)
+
+    def register_reserve_action_handler(
+            self, callbacks: Union[List[Callable[[str, str, bool, str], None]], None] = None):
+        """
+        Register a request reserve action handler callback that will be called
+
+        Args:
+            callbacks (List[function]): callback
+        """
+        if callbacks is not None:
+            self._req_reserve_action_handlers.extend(callbacks)
+
+    def register_cancel_rsv_action_handler(
+            self, callbacks: Union[List[Callable[[str], None]], None] = None):
+        """
+        Register a request stop reserve action handler callback that will be called
+
+        Args:
+            callbacks (List[function]): callback
+        """
+        if callbacks is not None:
+            self._req_cancel_rsv_action_handlers.extend(callbacks)            
+
+    def register_reserve_service_handler(
+            self, callbacks: Union[List[Callable[[str, str, bool, str], None]], None] = None):
+        """
+        Register a request reserve  action handler callback that will be called
+
+        Args:
+            callbacks (List[function]): callback
+        """
+        if callbacks is not None:
+            self._req_reserve_service_handlers.extend(callbacks)
+
+    def register_cancel_rsv_service_handler(
+            self, callbacks: Union[List[Callable[[str], None]], None] = None):
+        """
+        Register a request stop reserve action handler callback that will be called
+
+        Args:
+            callbacks (List[function]): callback
+        """
+        if callbacks is not None:
+            self._req_cancel_rsv_service_handlers.extend(callbacks)  
 
     def _on_handler_event(self, handlers, *args, **kwargs) -> None:
         for callback in handlers:
@@ -643,3 +703,62 @@ class RosWsGatewayClient:
                 topic_name, topic_type, remote_topic, israw, compression)  # 230427
         self._on_handler_event(self._req_advertise_handlers,
                                topic_name, topic_type, israw, compression)  # 230427
+        
+    # exprimental : Apr. 2024        
+    def reserve_service(
+            self, srv_name: str, srv_type: Union[str, None],
+            israw: bool = False, compression: Union[str, None] = None):
+        """reserve_service
+
+        Args:
+            srv_name (str): ROS service name
+            srv_type (Union[str, None]): ROS service type
+            israw (bool, optional): ROS data raw mode. Defaults to False.
+            compression (Union[str, None], optional): data compression mode. Defaults to None.
+        """
+        mlogger.debug("reserve_service %s:%s:%s:%s",
+                      srv_name, srv_type, israw, compression)
+        if self.gateway:
+            self.gateway.reserve_service(srv_name, srv_type, israw, compression)
+        self._on_handler_event(
+            self._req_reserve_service_handlers, srv_name, srv_type, israw)
+        
+    def cancel_reserve_service(self, srv_name: str):
+        """cancel_reserve_service
+
+        Args:
+            srv_name (str): ROS service name
+        """
+        mlogger.debug("cancel_reserve_service %s", srv_name)
+        if self.gateway:
+            self.gateway.cancel_reserve_service(srv_name)
+        self._on_handler_event(self._req_cancel_rsv_service_handlers, srv_name)        
+
+    def reserve_action(
+            self, act_name: str, act_type: Union[str, None],
+            israw: bool = False, compression: Union[str, None] = None):
+        """reserve_action
+
+        Args:
+            act_name (str): ROS action name
+            act_type (Union[str, None]): ROS action type
+            israw (bool, optional): ROS data raw mode. Defaults to False.
+            compression (Union[str, None], optional): data compression mode. Defaults to None.
+        """
+        mlogger.debug("reserve_action %s:%s:%s:%s", act_name,
+                      act_type, israw, compression)
+        if self.gateway:
+            self.gateway.reserve_action(act_name, act_type, israw, compression)
+        self._on_handler_event(
+            self._req_reserve_action_handlers, act_name, act_type, israw)        
+        
+    def cancel_reserve_action(self, act_name: str):
+        """cancel_reserve_action
+
+        Args:
+            act_name (str):  ROS action name
+        """
+        mlogger.debug("cancel_reserve_action %s", act_name)
+        if self.gateway:
+            self.gateway.cancel_reserve_action(act_name)
+        self._on_handler_event(self._req_cancel_rsv_action_handlers, act_name)                
