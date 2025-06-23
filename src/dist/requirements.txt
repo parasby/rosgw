@@ -11,3 +11,4 @@ numpy
 requests==2.31.0
 Pillow==9.5.0
 lz4
+tracerite==1.1.1
