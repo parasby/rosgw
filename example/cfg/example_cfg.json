@@ -5,12 +5,12 @@
         "address": "ws://172.28.165.227:9001",
         "publish": [
             {"name":"/kitti/camera_color_left/image_raw", 
-              "messageType":"sensor_msgs/msg/Image",
+              "type":"sensor_msgs/msg/Image",
               "compression":"cbor-raw"
             }
         ],
         "subscribe": [
-            {"name":"/cmd_vel", "messageType":"geometry_msgs/msg/Twist"}
+            {"name":"/cmd_vel", "type":"geometry_msgs/msg/Twist"}
         ]
     }
 ]
